@@ -89,7 +89,7 @@ To visualize the real-time data, set up a local Python environment and run the S
 ```bash
 python -m venv venv # Or python3 -m venv venv 
 source venv/bin/activate  # On Windows use: venv\Scripts\activate
-pip install streamlit pandas sqlalchemy psycopg2-binary
+pip install streamlit pandas sqlalchemy psycopg2-binary pytz
 streamlit run app.py
 ```
 
@@ -186,7 +186,7 @@ Pour visualiser les données en temps réel, configurez un environnement Python 
 ```bash
 python -m venv venv # Ou python3 -m venv venv
 source venv/bin/activate  # Sur Windows : venv\Scripts\activate
-pip install streamlit pandas sqlalchemy psycopg2-binary
+pip install streamlit pandas sqlalchemy psycopg2-binary pytz
 streamlit run app.py
 ```
 
