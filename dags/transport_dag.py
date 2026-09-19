@@ -2,36 +2,48 @@ import os
 import requests
 import pandas as pd
 
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from datetime import datetime, timedelta
+import pytz
 from airflow import DAG
 from airflow.operators.python import PythonOperator 
 
 # Ancien script
 def ingest_data():
-    api_key =  # Remplacez par votre clé API réelle
+    api_key = "" # Remplacez par votre clé API réelle
     db_url = "postgresql://admin:secretpassword@idf_postgres:5432/transport_db"
 
     headers = { "apiKey" : api_key }
-    id_station = "stop_area:IDFM:71321" 
+    id_station = "stop_area:IDFM:71511" 
     url = f"https://prim.iledefrance-mobilites.fr/marketplace/v2/navitia/stop_areas/{id_station}/departures"
 
     reponse = requests.get(url, headers=headers)
     if reponse.status_code == 200:
         data = reponse.json()
+
+        lignes_cibles = [
+            "Mairie d'Aubervilliers",
+            "Mairie d'Issy", 
+            "Bagneux", 
+            "Porte de Clignancourt"  
+            ] # Remplacez par les Terminus que vous souhaitez filtrer
+        
         departures = data.get("departures", [])
 
         lignes_propres = []
         heure_insertion = datetime.now()
         for departure in departures:
+            nom_ligne = departure["route"]["name"]
+            if nom_ligne in lignes_cibles:
                 lignes_propres.append({
                     "station_id": id_station,
-                    "ligne": departure["route"]["name"],
+                    "ligne": nom_ligne,
                     "direction": departure["display_informations"]["direction"],
                     "heure_depart_prevue": departure["stop_date_time"]["departure_date_time"],
                     "date_insertion": heure_insertion
                 })
         df = pd.DataFrame(lignes_propres)
+
         if not df.empty:
             engine = create_engine(db_url)
             df.to_sql('prochains_departs', engine, if_exists='append', index=False)
@@ -47,6 +59,35 @@ def count_rows():
     df_count = pd.read_sql("SELECT COUNT(*) FROM prochains_departs", engine)
 
     print(f"Nombre de lignes dans la table : {df_count.iloc[0, 0]}")
+
+def remove_duplicates():
+    db_url = "postgresql://admin:secretpassword@idf_postgres:5432/transport_db"
+    engine = create_engine(db_url)
+    query = text("""
+        DELETE FROM prochains_departs a
+        USING prochains_departs b
+        WHERE a.ctid < b.ctid
+        AND a.station_id = b.station_id
+        AND a.ligne = b.ligne
+        AND a.direction = b.direction
+        AND a.heure_depart_prevue = b.heure_depart_prevue
+    """)
+    with engine.begin() as conn:
+        result = conn.execute(query)
+        print(f"Nombre de doublons supprimés : {result.rowcount}")
+
+def cleanup_old_data():
+    db_url = "postgresql://admin:secretpassword@idf_postgres:5432/transport_db"
+    engine = create_engine(db_url)
+
+    timezone = pytz.timezone('Europe/Paris')
+    current_time = datetime.now(timezone)
+    current_time_str = current_time.strftime('%Y%m%dT%H%M%S')
+
+    query = text(f"DELETE FROM prochains_departs WHERE heure_depart_prevue < '{current_time_str}'")
+    with engine.begin() as conn:  
+        result = conn.execute(query)
+        print(f"Nombre d'anciens départs supprimés : {result.rowcount}")
 
 # Config du DAG
 default_args = {
@@ -72,4 +113,14 @@ with DAG(
         python_callable=count_rows
     )
 
-    ingest_task >> count_task
+    remove_duplicates_task = PythonOperator(
+        task_id='remove_duplicates',
+        python_callable=remove_duplicates
+    )
+
+    cleanup_task = PythonOperator(
+        task_id='cleanup_old_data',
+        python_callable=cleanup_old_data
+    )
+
+    ingest_task >> count_task >> remove_duplicates_task >> cleanup_task

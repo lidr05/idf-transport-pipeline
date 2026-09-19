@@ -10,7 +10,7 @@ api_key = os.getenv("PRIM_API_KEY")
 # Préparation du header
 headers = { "apiKey" : api_key }
 
-recherche = "Avenue Foch"
+recherche = "Marcadet-Poissoniers"  # Remplacez par le nom de la station que vous souhaitez rechercher
 url = f"https://prim.iledefrance-mobilites.fr/marketplace/v2/navitia/places?q={recherche}"
 
 # Récupération des données

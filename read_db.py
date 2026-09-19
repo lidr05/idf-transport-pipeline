@@ -8,4 +8,4 @@ load_dotenv()
 engine = create_engine(os.getenv("DATABASE_URL"))
 
 df_verif = pd.read_sql("SELECT * FROM prochains_departs", engine)
-print(df_verif.tail())
+print(df_verif)

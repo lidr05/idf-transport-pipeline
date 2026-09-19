@@ -11,7 +11,7 @@ api_key = os.getenv("PRIM_API_KEY")
 db_url = os.getenv("DATABASE_URL")
 
 headers = { "apiKey" : api_key }
-id_station = "stop_area:IDFM:71321" # 71321 : Avenue Foch
+id_station = "stop_area:IDFM:71511" # Résultat de search_station.py
 url = f"https://prim.iledefrance-mobilites.fr/marketplace/v2/navitia/stop_areas/{id_station}/departures"
 
 print("Extraction des données:")
@@ -19,7 +19,7 @@ reponse = requests.get(url, headers=headers)
 if reponse.status_code == 200:
     data = reponse.json()
     departs = data.get("departures", [])
-    #  print(f"departs: {departs}")
+    print(f"departs: {departs}")
 
     lignes_propres = []
     for dep in departs:
@@ -45,6 +45,7 @@ if reponse.status_code == 200:
 
     else :
         print("Aucun départ trouvé pour la station spécifiée.")
+
 else:
     print(f"Erreur lors de la requête : {reponse.status_code}")
     print("Logs erreur:", reponse.text)
