@@ -53,6 +53,14 @@ docker compose up -d
 2. Unpause the `ingestion_transport_idf` DAG to start the automated data pipeline.
 3. (Optional) Run the PostgreSQL table creation and constraint queries via your preferred SQL client (e.g., SQLTools) mapped to `localhost:5432`.
 
+If the Web UI is not accessible :
+```bash
+docker compose down
+mkdir -p dags logs plugins
+sudo chmod -R 777 dags logs plugins
+docker compose up airflow-init
+docker compose up -d
+```
 ### 5. Launch the Dashboard
 
 To visualize the real-time data, set up a local Python environment and run the Streamlit app:
@@ -121,6 +129,14 @@ docker compose up -d
 2. Activez (Unpause) le DAG `ingestion_transport_idf` pour lancer l'automatisation.
 3. (Optionnel) Exécutez les requêtes SQL de création de table et de contraintes d'unicité via votre client SQL (ex: SQLTools) connecté sur `localhost:5432`.
 
+Si l'interface web n'est pas accessible :
+```bash
+docker compose down
+mkdir -p dags logs plugins
+sudo chmod -R 777 dags logs plugins
+docker compose up airflow-init
+docker compose up -d
+```
 ### 5. Lancer le Tableau de Bord
 
 Pour visualiser les données en temps réel, configurez un environnement Python local et lancez l'application Streamlit :
