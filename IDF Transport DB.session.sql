@@ -1,2 +1,1 @@
-SELECT * FROM prochains_departs
-    ORDER BY heure_depart_prevue ASC
+DELETE * FROM prochains_departs;

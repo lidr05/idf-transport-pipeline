@@ -14,6 +14,8 @@ def ingest_data():
     db_url = "postgresql://admin:secretpassword@idf_postgres:5432/transport_db"
 
     headers = { "apiKey" : api_key }
+
+    # ID trouvé par search_station.py pour la station "Marcadet-Poissoniers"
     id_station = "stop_area:IDFM:71511" 
     url = f"https://prim.iledefrance-mobilites.fr/marketplace/v2/navitia/stop_areas/{id_station}/departures"
 
@@ -21,6 +23,7 @@ def ingest_data():
     if reponse.status_code == 200:
         data = reponse.json()
 
+        # Exemples : Terminus métro 4 et 12
         lignes_cibles = [
             "Mairie d'Aubervilliers",
             "Mairie d'Issy", 
@@ -43,11 +46,23 @@ def ingest_data():
                     "date_insertion": heure_insertion
                 })
         df = pd.DataFrame(lignes_propres)
-
+        
         if not df.empty:
             engine = create_engine(db_url)
-            df.to_sql('prochains_departs', engine, if_exists='append', index=False)
-            print("Données insérées avec succès dans la base de données.")
+
+            # Requête d'upsert pour éviter les doublons
+            upsert_query = text("""
+                INSERT INTO prochains_departs (station_id, ligne, direction, heure_depart_prevue, date_insertion)
+                VALUES (:station_id, :ligne, :direction, :heure_depart_prevue, :date_insertion)
+                ON CONFLICT (station_id, ligne, direction, heure_depart_prevue)
+                DO UPDATE SET date_insertion = EXCLUDED.date_insertion
+            """)
+
+            with engine.begin() as conn:
+                for ligne in lignes_propres:
+                    conn.execute(upsert_query, ligne)
+            print("Données insérées avec succès dans la base de données. (UPSERT)")
+
         else:
             print("Aucune donnée à insérer.")
     else:
@@ -59,22 +74,6 @@ def count_rows():
     df_count = pd.read_sql("SELECT COUNT(*) FROM prochains_departs", engine)
 
     print(f"Nombre de lignes dans la table : {df_count.iloc[0, 0]}")
-
-def remove_duplicates():
-    db_url = "postgresql://admin:secretpassword@idf_postgres:5432/transport_db"
-    engine = create_engine(db_url)
-    query = text("""
-        DELETE FROM prochains_departs a
-        USING prochains_departs b
-        WHERE a.ctid < b.ctid
-        AND a.station_id = b.station_id
-        AND a.ligne = b.ligne
-        AND a.direction = b.direction
-        AND a.heure_depart_prevue = b.heure_depart_prevue
-    """)
-    with engine.begin() as conn:
-        result = conn.execute(query)
-        print(f"Nombre de doublons supprimés : {result.rowcount}")
 
 def cleanup_old_data():
     db_url = "postgresql://admin:secretpassword@idf_postgres:5432/transport_db"
@@ -113,14 +112,9 @@ with DAG(
         python_callable=count_rows
     )
 
-    remove_duplicates_task = PythonOperator(
-        task_id='remove_duplicates',
-        python_callable=remove_duplicates
-    )
-
     cleanup_task = PythonOperator(
         task_id='cleanup_old_data',
         python_callable=cleanup_old_data
     )
 
-    ingest_task >> count_task >> remove_duplicates_task >> cleanup_task
+    ingest_task >> count_task >> cleanup_task
