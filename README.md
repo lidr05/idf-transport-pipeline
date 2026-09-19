@@ -48,7 +48,28 @@ docker compose up -d
 ```
 
 ### 4. Initialization
+### Create the table first : 
+```bash
+docker exec -it idf_postgres psql -U admin -d transport_db
+```
+And then :
+```bash
+CREATE TABLE IF NOT EXISTS prochains_departs (
+    station_id VARCHAR(50),
+    ligne VARCHAR(255),
+    direction VARCHAR(255),
+    heure_depart_prevue VARCHAR(50),
+    date_insertion TIMESTAMP
+);
 
+ALTER TABLE prochains_departs 
+ADD CONSTRAINT unique_train_departure UNIQUE (station_id, ligne, direction, heure_depart_prevue);
+```
+And finally :
+```bash
+\q
+```
+Then : 
 1. Access the Airflow Web UI at `http://localhost:8080`.
 2. Unpause the `ingestion_transport_idf` DAG to start the automated data pipeline.
 3. (Optional) Run the PostgreSQL table creation and constraint queries via your preferred SQL client (e.g., SQLTools) mapped to `localhost:5432`.
@@ -124,7 +145,28 @@ docker compose up -d
 ```
 
 ### 4. Initialisation
+#### Créer la table en premier lieu : 
+```bash
+docker exec -it idf_postgres psql -U admin -d transport_db
+```
+Puis :
+```bash
+CREATE TABLE IF NOT EXISTS prochains_departs (
+    station_id VARCHAR(50),
+    ligne VARCHAR(255),
+    direction VARCHAR(255),
+    heure_depart_prevue VARCHAR(50),
+    date_insertion TIMESTAMP
+);
 
+ALTER TABLE prochains_departs 
+ADD CONSTRAINT unique_train_departure UNIQUE (station_id, ligne, direction, heure_depart_prevue);
+```
+Et enfin :
+```bash
+\q
+```
+Ensuite : 
 1. Accédez à l'interface web d'Airflow via `http://localhost:8080`.
 2. Activez (Unpause) le DAG `ingestion_transport_idf` pour lancer l'automatisation.
 3. (Optionnel) Exécutez les requêtes SQL de création de table et de contraintes d'unicité via votre client SQL (ex: SQLTools) connecté sur `localhost:5432`.
