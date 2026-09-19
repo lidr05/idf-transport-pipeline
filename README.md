@@ -44,7 +44,7 @@ Clone the repository and launch the Docker infrastructure:
 ```bash
 git clone git@github.com:lidr05/idf-transport-pipeline.git
 cd idf-transport-pipeline
-docker-compose up -d
+docker compose up -d
 ```
 
 ### 4. Initialization
@@ -112,7 +112,7 @@ Clonez le dépôt et lancez l'infrastructure Docker :
 ```bash
 git clone git@github.com:lidr05/idf-transport-pipeline.git
 cd idf-transport-pipeline
-docker-compose up -d
+docker compose up -d
 ```
 
 ### 4. Initialisation
