@@ -27,7 +27,7 @@ services:
     depends_on: 
       - postgres_airflow
     environment:
-      - DATABASE_URL=postgresql://admin:${POSTGRES_PASSWORD}@idf_postgres:5432/transport_db
+      - DATABASE_URL=postgresql+psycopg2://admin:${POSTGRES_PASSWORD}@idf_postgres:5432/transport_db
       - PRIM_API_KEY=${PRIM_API_KEY}
       - AIRFLOW__CORE__EXECUTOR=LocalExecutor
       - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres_airflow/airflow
