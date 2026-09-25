@@ -5,7 +5,7 @@ services:
     container_name: idf_postgres
     environment:
       POSTGRES_USER: admin
-      POSTGRES_PASSWORD: secretpassword
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: transport_db
     ports:
       - "5432:5432"
@@ -27,6 +27,8 @@ services:
     depends_on: 
       - postgres_airflow
     environment:
+      - DATABASE_URL=postgresql://admin:${POSTGRES_PASSWORD}@idf_postgres:5432/transport_db
+      - PRIM_API_KEY=${PRIM_API_KEY}
       - AIRFLOW__CORE__EXECUTOR=LocalExecutor
       - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres_airflow/airflow
       - AIRFLOW__CORE__LOAD_EXAMPLES=False

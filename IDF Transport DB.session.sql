@@ -1,1 +1,0 @@
-DELETE * FROM prochains_departs;

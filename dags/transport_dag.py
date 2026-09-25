@@ -8,10 +8,13 @@ import pytz
 from airflow import DAG
 from airflow.operators.python import PythonOperator 
 
-# Ancien script
+from dotenv import load_dotenv
+
+load_dotenv()
+
 def ingest_data():
-    api_key = "" # Remplacez par votre clé API réelle
-    db_url = "postgresql://admin:secretpassword@idf_postgres:5432/transport_db"
+    api_key = os.getenv("PRIM_API_KEY")
+    db_url = os.getenv("DATABASE_URL")
 
     headers = { "apiKey" : api_key }
 
@@ -69,23 +72,23 @@ def ingest_data():
         raise Exception(f"Erreur lors de la requête : {reponse.status_code}, {reponse.text}")
 
 def count_rows():
-    db_url = "postgresql://admin:secretpassword@idf_postgres:5432/transport_db"
+    db_url = os.getenv("DATABASE_URL")
     engine = create_engine(db_url)
     df_count = pd.read_sql("SELECT COUNT(*) FROM prochains_departs", engine)
 
     print(f"Nombre de lignes dans la table : {df_count.iloc[0, 0]}")
 
 def cleanup_old_data():
-    db_url = "postgresql://admin:secretpassword@idf_postgres:5432/transport_db"
+    db_url = os.getenv("DATABASE_URL")
     engine = create_engine(db_url)
 
     timezone = pytz.timezone('Europe/Paris')
     current_time = datetime.now(timezone)
     current_time_str = current_time.strftime('%Y%m%dT%H%M%S')
 
-    query = text(f"DELETE FROM prochains_departs WHERE heure_depart_prevue < '{current_time_str}'")
+    query = text("DELETE FROM prochains_departs WHERE heure_depart_prevue < :now")
     with engine.begin() as conn:  
-        result = conn.execute(query)
+        result = conn.execute(query, {"now": current_time_str})
         print(f"Nombre d'anciens départs supprimés : {result.rowcount}")
 
 # Config du DAG

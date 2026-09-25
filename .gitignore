@@ -2,3 +2,5 @@ venv/
 logs/
 __pycache__/
 .env
+.vscode/
+*.session.sql

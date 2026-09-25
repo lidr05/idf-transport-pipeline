@@ -1,17 +1,19 @@
+import os
+from dotenv import load_dotenv
 import streamlit as st
 import pandas as pd
-import pytz
 
 from sqlalchemy import create_engine
-from datetime import datetime
 
 st.set_page_config(page_title="IDF Transports", layout="centered")
 st.title("Prochains Départs - IDF Transport")
-st.markdown("Dashboard : prochains départs dans les 5 prochaines minutes de la station concernée.")
+st.markdown("Dashboard : prochains départs de la station concernée dans la base de données.")
+
+load_dotenv()
 
 @st.cache_resource
 def init_db_connection():
-    return create_engine("postgresql://admin:secretpassword@localhost:5432/transport_db")
+    return create_engine(os.getenv("DATABASE_URL"))
 
 engine = init_db_connection()
 

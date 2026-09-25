@@ -2,7 +2,7 @@ import os
 import requests
 import pandas as pd
 from dotenv import load_dotenv
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from datetime import datetime
 
 # Chargement de API/DB
@@ -34,13 +34,18 @@ if reponse.status_code == 200:
     print(df)
 
     if not df.empty:
-        #print("Transformation réussie :")
-        #print(df[["ligne", "direction", "heure_depart_prevue"]].head())
-        #print("Sauvegarde dans la base de données...")
-
         # Chargement vers PostgreSQL
         engine = create_engine(db_url)
-        df.to_sql('prochains_departs', con=engine, if_exists='append', index=False)
+        upsert_query = text("""
+            INSERT INTO prochains_departs (station_id, ligne, direction, heure_depart_prevue, date_insertion)
+            VALUES (:station_id, :ligne, :direction, :heure_depart_prevue, :date_insertion)
+            ON CONFLICT (station_id, ligne, direction, heure_depart_prevue)
+            DO UPDATE SET date_insertion = EXCLUDED.date_insertion
+         """)
+
+        with engine.begin() as conn:
+            for ligne in lignes_propres:
+                conn.execute(upsert_query, ligne)
         print(f"{len(df)} lignes insérées dans la base de données.")
 
     else :

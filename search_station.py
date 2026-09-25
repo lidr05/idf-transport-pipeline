@@ -1,6 +1,5 @@
 import os
 import requests
-import pandas as pd
 from dotenv import load_dotenv
 
 # Chargement de la clé API depuis le fichier .env
@@ -11,11 +10,11 @@ api_key = os.getenv("PRIM_API_KEY")
 headers = { "apiKey" : api_key }
 
 recherche = "Marcadet-Poissoniers"  # Remplacez par le nom de la station que vous souhaitez rechercher
-url = f"https://prim.iledefrance-mobilites.fr/marketplace/v2/navitia/places?q={recherche}"
+url = "https://prim.iledefrance-mobilites.fr/marketplace/v2/navitia/places"
 
 # Récupération des données
 print("Envoi de la requête à l'API...")
-reponse = requests.get(url, headers=headers)
+reponse = requests.get(url, headers=headers, params={"q": recherche})
 
 if reponse.status_code == 200:
     data = reponse.json()
